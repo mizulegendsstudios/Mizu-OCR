@@ -3,117 +3,305 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OCR para Resultados de MOBA</title>
+    <title>Analizador de Partidas MOBA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+        body { font-family: 'Montserrat', sans-serif; }
+        .game-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .game-card:hover { transform: translateY(-5px); }
+        .stats-bar { transition: width 1.5s ease-in-out; }
+        .team-victory { box-shadow: 0 0 15px rgba(72, 187, 120, 0.6); }
+        .team-defeat { box-shadow: 0 0 15px rgba(245, 101, 101, 0.6); }
+    </style>
 </head>
 <body class="bg-gradient-to-br from-gray-800 to-gray-900 min-h-screen text-white">
-    <div class="container mx-auto px-4 py-8 max-w-5xl">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
         <header class="text-center mb-12">
-            <h1 class="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">OCR para MOBA</h1>
-            <p class="text-xl text-gray-300">Extrae texto y estadísticas de tus partidas de Mobile Legends, Wild Rift y otros MOBAs</p>
+            <h1 class="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">Analizador de Partidas MOBA</h1>
+            <p class="text-xl text-gray-300">Herramienta avanzada de OCR para análisis de resultados de juegos MOBA</p>
         </header>
 
-        <main class="bg-gray-700 rounded-2xl shadow-2xl p-6 mb-10">
-            <div class="grid md:grid-cols-2 gap-8">
-                <div>
-                    <h2 class="text-2xl font-bold text-blue-400 mb-6">Sube tu captura de pantalla</h2>
-                    
-                    <div class="border-2 border-dashed border-blue-400 rounded-xl p-8 text-center mb-6 h-64 flex flex-col items-center justify-center" id="dropZone">
-                        <i class="fas fa-cloud-upload-alt text-blue-400 text-5xl mb-4"></i>
-                        <p class="text-gray-300">Arrastra tu imagen aquí o</p>
-                        <label for="fileInput" class="cursor-pointer mt-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition duration-300 inline-block">
-                            <i class="fas fa-search mr-2"></i> Seleccionar archivo
-                        </label>
-                        <input type="file" id="fileInput" accept="image/*" class="hidden">
+        <div class="grid md:grid-cols-3 gap-8 mb-12">
+            <div class="md:col-span-2 bg-gray-700 rounded-2xl shadow-2xl p-6">
+                <h2 class="text-2xl font-bold text-blue-400 mb-6">Sube tu captura de pantalla</h2>
+                
+                <div class="border-2 border-dashed border-blue-400 rounded-xl p-8 text-center mb-6 h-64 flex flex-col items-center justify-center" id="dropZone">
+                    <i class="fas fa-cloud-upload-alt text-blue-400 text-5xl mb-4"></i>
+                    <p class="text-gray-300">Arrastra tu imagen aquí o</p>
+                    <label for="fileInput" class="cursor-pointer mt-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition duration-300 inline-block">
+                        <i class="fas fa-search mr-2"></i> Seleccionar archivo
+                    </label>
+                    <input type="file" id="fileInput" accept="image/*" class="hidden">
+                </div>
+                
+                <div class="flex space-x-4 mb-6">
+                    <button id="processBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
+                        <i class="fas fa-cogs mr-2"></i> Procesar imagen
+                    </button>
+                    <button id="clearBtn" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
+                        <i class="fas fa-trash-alt mr-2"></i> Limpiar
+                    </button>
+                </div>
+                
+                <div class="bg-gray-800 rounded-xl p-4">
+                    <h3 class="text-lg font-semibold text-blue-400 mb-2">Juegos compatibles</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="bg-blue-900 text-blue-200 px-3 py-1 rounded-full text-sm">Mobile Legends</span>
+                        <span class="bg-purple-900 text-purple-200 px-3 py-1 rounded-full text-sm">Wild Rift</span>
+                        <span class="bg-red-900 text-red-200 px-3 py-1 rounded-full text-sm">Honor of Kings</span>
+                        <span class="bg-yellow-900 text-yellow-200 px-3 py-1 rounded-full text-sm">Onmyoji Arena</span>
                     </div>
-                    
-                    <div class="flex space-x-4 mb-6">
-                        <button id="processBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
-                            <i class="fas fa-cogs mr-2"></i> Procesar imagen
-                        </button>
-                        <button id="clearBtn" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
-                            <i class="fas fa-trash-alt mr-2"></i> Limpiar
-                        </button>
+                </div>
+            </div>
+            
+            <div class="bg-gray-700 rounded-2xl shadow-xl p-6">
+                <h2 class="text-2xl font-bold text-blue-400 mb-6">Resultado del OCR</h2>
+                
+                <div class="bg-gray-800 rounded-xl p-4 mb-6 h-64 overflow-y-auto">
+                    <div id="progressContainer" class="hidden mb-4">
+                        <div class="flex justify-between text-sm text-gray-400 mb-1">
+                            <span id="progressStatus">Iniciando...</span>
+                            <span id="progressValue">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2.5">
+                            <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                        </div>
                     </div>
-                    
-                    <div class="bg-gray-800 rounded-xl p-4">
-                        <h3 class="text-lg font-semibold text-blue-400 mb-2">Juegos compatibles</h3>
-                        <div class="flex flex-wrap gap-2">
-                            <span class="bg-blue-900 text-blue-200 px-3 py-1 rounded-full text-sm">Mobile Legends</span>
-                            <span class="bg-purple-900 text-purple-200 px-3 py-1 rounded-full text-sm">Wild Rift</span>
-                            <span class="bg-red-900 text-red-200 px-3 py-1 rounded-full text-sm">Honor of Kings</span>
-                            <span class="bg-yellow-900 text-yellow-200 px-3 py-1 rounded-full text-sm">Onmyoji Arena</span>
+                    <div id="resultContainer" class="hidden">
+                        <pre id="ocrResult" class="text-sm whitespace-pre-wrap text-gray-200"></pre>
+                    </div>
+                    <div id="placeholder" class="h-full flex items-center justify-center text-gray-500">
+                        <div class="text-center">
+                            <i class="fas fa-file-alt text-4xl mb-2"></i>
+                            <p>El resultado de tu OCR aparecerá aquí</p>
                         </div>
                     </div>
                 </div>
                 
-                <div>
-                    <h2 class="text-2xl font-bold text-blue-400 mb-6">Resultado del OCR</h2>
-                    
-                    <div class="bg-gray-800 rounded-xl p-4 mb-6 h-64 overflow-y-auto">
-                        <div id="progressContainer" class="hidden mb-4">
-                            <div class="flex justify-between text-sm text-gray-400 mb-1">
-                                <span id="progressStatus">Iniciando...</span>
-                                <span id="progressValue">0%</span>
-                            </div>
-                            <div class="w-full bg-gray-700 rounded-full h-2.5">
-                                <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
-                            </div>
-                        </div>
-                        <div id="resultContainer" class="hidden">
-                            <pre id="ocrResult" class="text-sm whitespace-pre-wrap text-gray-200"></pre>
-                        </div>
-                        <div id="placeholder" class="h-full flex items-center justify-center text-gray-500">
-                            <div class="text-center">
-                                <i class="fas fa-file-alt text-4xl mb-2"></i>
-                                <p>El resultado de tu OCR aparecerá aquí</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="flex space-x-4">
-                        <button id="copyBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center opacity-50" disabled>
-                            <i class="fas fa-copy mr-2"></i> Copiar texto
-                        </button>
-                        <button id="downloadBtn" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center opacity-50" disabled>
-                            <i class="fas fa-download mr-2"></i> Descargar
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </main>
-        
-        <div class="bg-gray-700 rounded-2xl shadow-xl p-6 mb-10">
-            <h2 class="text-2xl font-bold text-blue-400 mb-6">Cómo utilizar esta herramienta</h2>
-            <div class="grid md:grid-cols-3 gap-6">
-                <div class="bg-gray-800 p-5 rounded-xl">
-                    <div class="text-blue-400 text-3xl mb-4"><i class="fas fa-upload"></i></div>
-                    <h3 class="text-lg font-semibold mb-2">1. Sube tu imagen</h3>
-                    <p class="text-gray-400">Selecciona una captura de pantalla de tus resultados de partida o historial.</p>
-                </div>
-                <div class="bg-gray-800 p-5 rounded-xl">
-                    <div class="text-blue-400 text-3xl mb-4"><i class="fas fa-cogs"></i></div>
-                    <h3 class="text-lg font-semibold mb-2">2. Procesa el texto</h3>
-                    <p class="text-gray-400">Nuestro OCR especializado analizará la imagen para extraer todo el texto.</p>
-                </div>
-                <div class="bg-gray-800 p-5 rounded-xl">
-                    <div class="text-blue-400 text-3xl mb-4"><i class="fas fa-file-export"></i></div>
-                    <h3 class="text-lg font-semibold mb-2">3. Copia o descarga</h3>
-                    <p class="text-gray-400">Obtén los resultados en formato de texto para tus análisis o registros.</p>
+                <div class="flex space-x-4">
+                    <button id="copyBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center opacity-50" disabled>
+                        <i class="fas fa-copy mr-2"></i> Copiar texto
+                    </button>
+                    <button id="downloadBtn" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center opacity-50" disabled>
+                        <i class="fas fa-download mr-2"></i> Descargar
+                    </button>
                 </div>
             </div>
         </div>
-        
+
+        <!-- Análisis de partida -->
+        <div class="bg-gray-700 rounded-2xl shadow-xl p-6 mb-8">
+            <h2 class="text-2xl font-bold text-blue-400 mb-6">Análisis de Partida</h2>
+            
+            <div class="grid md:grid-cols-5 gap-6 mb-8">
+                <div class="bg-gray-800 p-4 rounded-xl text-center">
+                    <div class="text-3xl font-bold text-green-400">25/09/01</div>
+                    <div class="text-gray-400 text-sm mt-1">Fecha</div>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-xl text-center">
+                    <div class="text-3xl font-bold text-blue-400">12:32</div>
+                    <div class="text-gray-400 text-sm mt-1">Duración</div>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-xl text-center">
+                    <div class="text-3xl font-bold text-purple-400">Ranked</div>
+                    <div class="text-gray-400 text-sm mt-1">Tipo de partida</div>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-xl text-center">
+                    <div class="text-3xl font-bold text-yellow-400">19/0/6</div>
+                    <div class="text-gray-400 text-sm mt-1">K/D/A (MVP)</div>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-xl text-center">
+                    <div class="text-3xl font-bold text-red-400">17.8</div>
+                    <div class="text-gray-400 text-sm mt-1">Puntuación máxima</div>
+                </div>
+            </div>
+            
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-blue-400 mb-4">Resumen de equipos</h3>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-gray-800 p-5 rounded-xl team-victory">
+                        <h4 class="text-lg font-semibold text-green-400 mb-3 flex items-center">
+                            <i class="fas fa-crown mr-2"></i> Equipo victorioso
+                        </h4>
+                        <div class="space-y-3">
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-300">Kills totales:</span>
+                                    <span class="text-green-400 font-semibold">36</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-2">
+                                    <div class="bg-green-600 h-2 rounded-full stats-bar" style="width: 75%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-300">Muertes totales:</span>
+                                    <span class="text-green-400 font-semibold">15</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-2">
+                                    <div class="bg-green-600 h-2 rounded-full stats-bar" style="width: 32%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-300">Asistencias totales:</span>
+                                    <span class="text-green-400 font-semibold">32</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-2">
+                                    <div class="bg-green-600 h-2 rounded-full stats-bar" style="width: 68%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-800 p-5 rounded-xl team-defeat">
+                        <h4 class="text-lg font-semibold text-red-400 mb-3 flex items-center">
+                            <i class="fas fa-skull-crossbones mr-2"></i> Equipo derrotado
+                        </h4>
+                        <div class="space-y-3">
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-300">Kills totales:</span>
+                                    <span class="text-red-400 font-semibold">12</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-2">
+                                    <div class="bg-red-600 h-2 rounded-full stats-bar" style="width: 25%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-300">Muertes totales:</span>
+                                    <span class="text-red-400 font-semibold">32</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-2">
+                                    <div class="bg-red-600 h-2 rounded-full stats-bar" style="width: 68%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-300">Asistencias totales:</span>
+                                    <span class="text-red-400 font-semibold">15</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-2">
+                                    <div class="bg-red-600 h-2 rounded-full stats-bar" style="width: 32%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div>
+                <h3 class="text-xl font-semibold text-blue-400 mb-4">Estadísticas de jugadores</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-400">
+                        <thead class="text-xs uppercase bg-gray-800 text-gray-400">
+                            <tr>
+                                <th scope="col" class="px-4 py-3">Jugador</th>
+                                <th scope="col" class="px-4 py-3">Campeón</th>
+                                <th scope="col" class="px-4 py-3">Nivel</th>
+                                <th scope="col" class="px-4 py-3">K/D/A</th>
+                                <th scope="col" class="px-4 py-3">Puntuación</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-750">
+                                <td class="px-4 py-2 font-medium text-white">水Mizu</td>
+                                <td class="px-4 py-2">Ibaraki Doji</td>
+                                <td class="px-4 py-2">15</td>
+                                <td class="px-4 py-2 text-green-400">19/0/6</td>
+                                <td class="px-4 py-2 font-bold text-yellow-400">17.8</td>
+                            </tr>
+                            <tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-750">
+                                <td class="px-4 py-2 font-medium text-white">Ajax</td>
+                                <td class="px-4 py-2">Tesso</td>
+                                <td class="px-4 py-2">15</td>
+                                <td class="px-4 py-2 text-green-400">6/2/6</td>
+                                <td class="px-4 py-2 font-bold text-green-400">9.8</td>
+                            </tr>
+                            <tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-750">
+                                <td class="px-4 py-2 font-medium text-white">Purple13</td>
+                                <td class="px-4 py-2">Samurai X</td>
+                                <td class="px-4 py-2">14</td>
+                                <td class="px-4 py-2 text-green-400">2/2/17</td>
+                                <td class="px-4 py-2 font-bold text-green-400">14.3</td>
+                            </tr>
+                            <tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-750">
+                                <td class="px-4 py-2 font-medium text-white">PateelitS</td>
+                                <td class="px-4 py-2">Momiji</td>
+                                <td class="px-4 py-2">13</td>
+                                <td class="px-4 py-2 text-yellow-400">4/3/5</td>
+                                <td class="px-4 py-2">8.0</td>
+                            </tr>
+                            <tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-750">
+                                <td class="px-4 py-2 font-medium text-white">Kyuumei Neko</td>
+                                <td class="px-4 py-2">ManataBirzi</td>
+                                <td class="px-4 py-2">12</td>
+                                <td class="px-4 py-2 text-yellow-400">5/1/2</td>
+                                <td class="px-4 py-2">8.6</td>
+                            </tr>
+                            <tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-750">
+                                <td class="px-4 py-2 font-medium text-white">Tori</td>
+                                <td class="px-4 py-2">Miketsu</td>
+                                <td class="px-4 py-2">14</td>
+                                <td class="px-4 py-2 text-red-400">3/7/3</td>
+                                <td class="px-4 py-2">8.3</td>
+                            </tr>
+                            <tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-750">
+                                <td class="px-4 py-2 font-medium text-white">Tsucchi</td>
+                                <td class="px-4 py-2">Momiji</td>
+                                <td class="px-4 py-2">14</td>
+                                <td class="px-4 py-2 text-red-400">3/8/0</td>
+                                <td class="px-4 py-2">5.5</td>
+                            </tr>
+                            <tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-750">
+                                <td class="px-4 py-2 font-medium text-white">MRIFNok</td>
+                                <td class="px-4 py-2">Kaguya</td>
+                                <td class="px-4 py-2">13</td>
+                                <td class="px-4 py-2 text-red-400">1/6/3</td>
+                                <td class="px-4 py-2">5.8</td>
+                            </tr>
+                            <tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-750">
+                                <td class="px-4 py-2 font-medium text-white">Myakyo</td>
+                                <td class="px-4 py-2">Kuro Mujou</td>
+                                <td class="px-4 py-2">13</td>
+                                <td class="px-4 py-2 text-red-400">0/10/1</td>
+                                <td class="px-4 py-2">4.5</td>
+                            </tr>
+                            <tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-750">
+                                <td class="px-4 py-2 font-medium text-white">sebas725</td>
+                                <td class="px-4 py-2">Kainin</td>
+                                <td class="px-4 py-2">14</td>
+                                <td class="px-4 py-2 text-red-400">1/5/0</td>
+                                <td class="px-4 py-2">4.5</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <div class="bg-gray-700 rounded-2xl shadow-xl p-6 text-center">
-            <h2 class="text-2xl font-bold text-blue-400 mb-4">Características técnicas</h2>
-            <p class="text-gray-300 mb-4">Optimizado para reconocer texto en interfaces de MOBA y resultados de partidas</p>
-            <div class="flex flex-wrap justify-center gap-3">
-                <span class="bg-blue-900 text-blue-200 px-3 py-1 rounded-full text-sm">Reconoce nombres de jugadores</span>
-                <span class="bg-blue-900 text-blue-200 px-3 py-1 rounded-full text-sm">Extrae estadísticas (K/D/A)</span>
-                <span class="bg-blue-900 text-blue-200 px-3 py-1 rounded-full text-sm">Detecta porcentajes y ratios</span>
-                <span class="bg-blue-900 text-blue-200 px-3 py-1 rounded-full text-sm">Identifica tiempos de partida</span>
+            <h2 class="text-2xl font-bold text-blue-400 mb-4">Análisis de rendimiento</h2>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="bg-gray-800 p-5 rounded-xl">
+                    <div class="text-blue-400 text-3xl mb-4"><i class="fas fa-user-alt"></i></div>
+                    <h3 class="text-lg font-semibold mb-2">MVP: 水Mizu</h3>
+                    <p class="text-gray-400">19/0/6 - Puntuación perfecta con 0 muertes</p>
+                </div>
+                <div class="bg-gray-800 p-5 rounded-xl">
+                    <div class="text-green-400 text-3xl mb-4"><i class="fas fa-users"></i></div>
+                    <h3 class="text-lg font-semibold mb-2">Equipo coordinado</h3>
+                    <p class="text-gray-400">Relación K/D/A positiva: 36/15/32</p>
+                </div>
+                <div class="bg-gray-800 p-5 rounded-xl">
+                    <div class="text-red-400 text-3xl mb-4"><i class="fas fa-exclamation-triangle"></i></div>
+                    <h3 class="text-lg font-semibold mb-2">Problemas enemigos</h3>
+                    <p class="text-gray-400">Excesivas muertes (32) y baja coordinación</p>
+                </div>
             </div>
         </div>
     </div>
@@ -212,16 +400,23 @@
                 
                 Tesseract.recognize(
                     currentImage,
-                    'eng+spa', // Idiomas: inglés y español
+                    'eng', // Idioma inglés para mejor reconocimiento de números
                     { 
                         logger: message => updateProgress(message),
                         // Configuración específica para interfaces de juego
-                        tessedit_pageseg_mode: Tesseract.PSM.SPARSE_TEXT,
-                        tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÁÉÍÓÚáéíóúÑñ/-:.%()KDA '
+                        tessedit_pageseg_mode: Tesseract.PSM.AUTO,
+                        tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÁÉÍÓÚáéíóúÑñ/-:.%()KDA/ '
                     }
                 ).then(result => {
                     extractedText = result.data.text;
                     ocrResult.textContent = extractedText;
+                    
+                    // Animar barras de estadísticas
+                    setTimeout(() => {
+                        document.querySelectorAll('.stats-bar').forEach(bar => {
+                            bar.style.width = bar.style.width;
+                        });
+                    }, 100);
                     
                     // Actualizar interfaz
                     progressContainer.classList.add('hidden');
