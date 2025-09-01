@@ -3,119 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OCR para Resultados de MOBA</title>
+    <title>Mizu-OCR: Analizador de Partidas MOBA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+    <script src="https://docs.opencv.org/4.x/opencv.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        #previewCanvas {
+            max-width: 100%;
+            height: auto;
+            border-radius: 1rem;
+            display: none;
+        }
+    </style>
 </head>
-<body class="bg-gradient-to-br from-gray-800 to-gray-900 min-h-screen text-white">
-    <div class="container mx-auto px-4 py-8 max-w-5xl">
+<body class="bg-gradient-to-br from-gray-800 to-gray-900 min-h-screen text-white font-sans">
+    <div class="container mx-auto px-4 py-12 max-w-7xl">
         <header class="text-center mb-12">
-            <h1 class="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">OCR para MOBA</h1>
-            <p class="text-xl text-gray-300">Extrae texto y estadísticas de tus partidas de Mobile Legends, Wild Rift y otros MOBAs</p>
+            <h1 class="text-4xl md:text-6xl font-extrabold mb-4 tracking-tight bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">Mizu-OCR</h1>
+            <p class="text-lg md:text-xl text-gray-300">Análisis inteligente de resultados e historiales de partidas de MOBA</p>
         </header>
 
-        <main class="bg-gray-700 rounded-2xl shadow-2xl p-6 mb-10">
-            <div class="grid md:grid-cols-2 gap-8">
-                <div>
-                    <h2 class="text-2xl font-bold text-blue-400 mb-6">Sube tu captura de pantalla</h2>
-                    
-                    <div class="border-2 border-dashed border-blue-400 rounded-xl p-8 text-center mb-6 h-64 flex flex-col items-center justify-center" id="dropZone">
-                        <i class="fas fa-cloud-upload-alt text-blue-400 text-5xl mb-4"></i>
-                        <p class="text-gray-300">Arrastra tu imagen aquí o</p>
-                        <label for="fileInput" class="cursor-pointer mt-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition duration-300 inline-block">
-                            <i class="fas fa-search mr-2"></i> Seleccionar archivo
-                        </label>
-                        <input type="file" id="fileInput" accept="image/*" class="hidden">
+        <main class="grid lg:grid-cols-2 gap-10">
+            <section class="bg-gray-800 rounded-3xl shadow-xl p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]">
+                <h2 class="text-2xl md:text-3xl font-bold text-blue-400 mb-6 flex items-center"><i class="fas fa-image mr-3"></i>Subir y Pre-procesar</h2>
+                <div class="border-2 border-dashed border-blue-500 rounded-2xl p-8 text-center mb-6 h-80 flex flex-col items-center justify-center" id="dropZone">
+                    <i class="fas fa-cloud-upload-alt text-blue-400 text-6xl mb-4"></i>
+                    <p class="text-gray-300">Arrastra tu imagen aquí o</p>
+                    <label for="fileInput" class="cursor-pointer mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl transition-transform duration-300 hover:scale-105">
+                        <i class="fas fa-search mr-2"></i> Seleccionar archivo
+                    </label>
+                    <input type="file" id="fileInput" accept="image/*" class="hidden">
+                </div>
+                <canvas id="previewCanvas"></canvas>
+            </section>
+
+            <section class="bg-gray-800 rounded-3xl shadow-xl p-8 transition-all duration-300 hover:shadow-2xl hover:scale-[1.01]">
+                <h2 class="text-2xl md:text-3xl font-bold text-green-400 mb-6 flex items-center"><i class="fas fa-cogs mr-3"></i>Resultados y Análisis</h2>
+                
+                <div id="progressContainer" class="hidden mb-6">
+                    <div class="flex justify-between text-sm text-gray-400 mb-2">
+                        <span id="progressStatus">Preparando OCR...</span>
+                        <span id="progressValue">0%</span>
                     </div>
-                    
-                    <div class="flex space-x-4 mb-6">
-                        <button id="processBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
-                            <i class="fas fa-cogs mr-2"></i> Procesar imagen
-                        </button>
-                        <button id="clearBtn" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
-                            <i class="fas fa-trash-alt mr-2"></i> Limpiar
-                        </button>
+                    <div class="w-full bg-gray-700 rounded-full h-3">
+                        <div id="progressBar" class="bg-green-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
                     </div>
-                    
-                    <div class="bg-gray-800 rounded-xl p-4">
-                        <h3 class="text-lg font-semibold text-blue-400 mb-2">Juegos compatibles</h3>
-                        <div class="flex flex-wrap gap-2">
-                            <span class="bg-blue-900 text-blue-200 px-3 py-1 rounded-full text-sm">Mobile Legends</span>
-                            <span class="bg-purple-900 text-purple-200 px-3 py-1 rounded-full text-sm">Wild Rift</span>
-                            <span class="bg-red-900 text-red-200 px-3 py-1 rounded-full text-sm">Honor of Kings</span>
-                            <span class="bg-yellow-900 text-yellow-200 px-3 py-1 rounded-full text-sm">Onmyoji Arena</span>
-                        </div>
+                </div>
+
+                <div id="resultsContent" class="hidden">
+                    <div class="bg-gray-900 rounded-xl p-4 mb-6">
+                        <h3 class="text-lg font-semibold text-gray-200 mb-2">Texto Extraído (sin procesar)</h3>
+                        <pre id="rawResult" class="text-sm whitespace-pre-wrap text-gray-400 font-mono overflow-y-auto h-32 bg-gray-900 p-2 rounded-lg border border-gray-700"></pre>
+                    </div>
+                    <div class="bg-gray-900 rounded-xl p-4">
+                        <h3 class="text-lg font-semibold text-gray-200 mb-2">Datos Estructurados</h3>
+                        <div id="structuredData" class="space-y-4"></div>
                     </div>
                 </div>
                 
-                <div>
-                    <h2 class="text-2xl font-bold text-blue-400 mb-6">Resultado del OCR</h2>
-                    
-                    <div class="bg-gray-800 rounded-xl p-4 mb-6 h-64 overflow-y-auto">
-                        <div id="progressContainer" class="hidden mb-4">
-                            <div class="flex justify-between text-sm text-gray-400 mb-1">
-                                <span id="progressStatus">Iniciando...</span>
-                                <span id="progressValue">0%</span>
-                            </div>
-                            <div class="w-full bg-gray-700 rounded-full h-2.5">
-                                <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
-                            </div>
-                        </div>
-                        <div id="resultContainer" class="hidden">
-                            <pre id="ocrResult" class="text-sm whitespace-pre-wrap text-gray-200"></pre>
-                        </div>
-                        <div id="placeholder" class="h-full flex items-center justify-center text-gray-500">
-                            <div class="text-center">
-                                <i class="fas fa-file-alt text-4xl mb-2"></i>
-                                <p>El resultado de tu OCR aparecerá aquí</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="flex space-x-4">
-                        <button id="copyBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center opacity-50" disabled>
-                            <i class="fas fa-copy mr-2"></i> Copiar texto
-                        </button>
-                        <button id="downloadBtn" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center opacity-50" disabled>
-                            <i class="fas fa-download mr-2"></i> Descargar
-                        </button>
+                <div id="placeholder" class="h-full flex items-center justify-center text-gray-500 text-center">
+                    <div class="p-4">
+                        <i class="fas fa-file-alt text-4xl mb-2"></i>
+                        <p>Los datos de tu partida aparecerán aquí</p>
                     </div>
                 </div>
-            </div>
+            </section>
         </main>
-        
-        <div class="bg-gray-700 rounded-2xl shadow-xl p-6 mb-10">
-            <h2 class="text-2xl font-bold text-blue-400 mb-6">Cómo utilizar esta herramienta</h2>
-            <div class="grid md:grid-cols-3 gap-6">
-                <div class="bg-gray-800 p-5 rounded-xl">
-                    <div class="text-blue-400 text-3xl mb-4"><i class="fas fa-upload"></i></div>
-                    <h3 class="text-lg font-semibold mb-2">1. Sube tu imagen</h3>
-                    <p class="text-gray-400">Selecciona una captura de pantalla de tus resultados de partida o historial.</p>
-                </div>
-                <div class="bg-gray-800 p-5 rounded-xl">
-                    <div class="text-blue-400 text-3xl mb-4"><i class="fas fa-cogs"></i></div>
-                    <h3 class="text-lg font-semibold mb-2">2. Procesa el texto</h3>
-                    <p class="text-gray-400">Nuestro OCR especializado analizará la imagen para extraer todo el texto.</p>
-                </div>
-                <div class="bg-gray-800 p-5 rounded-xl">
-                    <div class="text-blue-400 text-3xl mb-4"><i class="fas fa-file-export"></i></div>
-                    <h3 class="text-lg font-semibold mb-2">3. Copia o descarga</h3>
-                    <p class="text-gray-400">Obtén los resultados en formato de texto para tus análisis o registros.</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="bg-gray-700 rounded-2xl shadow-xl p-6 text-center">
-            <h2 class="text-2xl font-bold text-blue-400 mb-4">Características técnicas</h2>
-            <p class="text-gray-300 mb-4">Optimizado para reconocer texto en interfaces de MOBA y resultados de partidas</p>
-            <div class="flex flex-wrap justify-center gap-3">
-                <span class="bg-blue-900 text-blue-200 px-3 py-1 rounded-full text-sm">Reconoce nombres de jugadores</span>
-                <span class="bg-blue-900 text-blue-200 px-3 py-1 rounded-full text-sm">Extrae estadísticas (K/D/A)</span>
-                <span class="bg-blue-900 text-blue-200 px-3 py-1 rounded-full text-sm">Detecta porcentajes y ratios</span>
-                <span class="bg-blue-900 text-blue-200 px-3 py-1 rounded-full text-sm">Identifica tiempos de partida</span>
-            </div>
-        </div>
     </div>
     <script src="app.js"></script>
 </body>
