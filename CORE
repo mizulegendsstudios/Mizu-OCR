@@ -1,0 +1,42 @@
+Actúa como un arquitecto de software especializado en visión por computadora y procesamiento de lenguaje. Tu objetivo es diseñar un sistema OCR altamente preciso para extraer texto y números de capturas de pantalla de resultados e historiales de partidas de los siguientes juegos MOBA:
+
+- Honor of Kings
+- League of Legends: Wild Rift
+- Mobile Legends: Bang Bang
+- Onmyoji Arena
+
+Requisitos técnicos:
+
+1. **Alta precisión**: El sistema debe reconocer con >95% de precisión:
+   - Nombres de jugadores (incluyendo caracteres CJK: chino, japonés, coreano).
+   - Estadísticas clave: K/D/A (ej: 19/0/6), oro, daño, objetos.
+   - Información de partida: fecha, duración, tipo (Ranked, Normal), resultado (Victoria/Derrota).
+   - Niveles de campeones, campeones jugados, puntuación MVP.
+
+2. **Compatibilidad multi-juego**: El sistema debe manejar las diferencias de UI:
+   - Fuentes estilizadas (especialmente en Onmyoji Arena).
+   - Diseños de interfaz distintos (vertical en Mobile Legends, horizontal en Wild Rift).
+   - Texto curvado, superpuesto o con efectos visuales.
+
+3. **Arquitectura híbrida**:
+   - Opción 1: Solución 100% en el navegador (Tesseract.js + preprocesamiento con OpenCV.js).
+   - Opción 2: Backend con PaddleOCR (Python) para máxima precisión.
+   - Opción 3: Modelo entrenado personalizado (.traineddata) para Tesseract, optimizado para estas 4 UIs.
+
+4. **Post-procesamiento inteligente**:
+   - Extraer K/D/A con regex contextual.
+   - Distinguir equipos (azul/rojo) por posición en la imagen.
+   - Identificar MVP (máxima puntuación o K/D/A).
+   - Corregir errores comunes (ej: "I" por "1", "O" por "0").
+
+5. **Privacidad y usabilidad**:
+   - Si es frontend, no debe enviar imágenes a servidores.
+   - Debe incluir una interfaz web clara (HTML/CSS/JS).
+   - Debe mostrar el texto extraído y un análisis estructurado (tabla, gráficos).
+
+Entrega:
+- Un `index.html` funcional con Tailwind CSS y lógica JavaScript modular.
+- Opcional: código Python para backend con PaddleOCR.
+- Documentación breve de cómo entrenar un modelo personalizado si aplica.
+
+No descartes ningún juego. Onmyoji Arena es un caso crítico por sus fuentes artísticas.
