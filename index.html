@@ -3,315 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OCR para Resultados de MOBA</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+    <title>Mizu-OCR | Analizador de Partidas MOBA</title>
+    <link rel="stylesheet" href="scr/frontend/style/mainstyle.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js" defer></script>
+    <script src="https://docs.opencv.org/4.8.0/opencv.js" defer></script>
 </head>
-<body class="bg-gradient-to-br from-gray-800 to-gray-900 min-h-screen text-white">
-    <div class="container mx-auto px-4 py-8 max-w-5xl">
-        <header class="text-center mb-12">
-            <h1 class="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">OCR para MOBA</h1>
-            <p class="text-xl text-gray-300">Extrae texto y estadísticas de tus partidas de Mobile Legends, Wild Rift y otros MOBAs</p>
+<body class="bg-gradient-to-br from-gray-900 to-black text-white font-sans">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <header class="text-center mb-12 slide-down">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">Mizu-OCR</h1>
+            <p class="text-xl text-gray-300">Analiza tus partidas de MOBA con precisión</p>
+            <div class="mt-4 flex flex-wrap justify-center gap-3">
+                <span class="badge">Mobile Legends</span>
+                <span class="badge">Wild Rift</span>
+                <span class="badge">Honor of Kings</span>
+                <span class="badge">Onmyoji Arena</span>
+            </div>
         </header>
 
-        <main class="bg-gray-700 rounded-2xl shadow-2xl p-6 mb-10">
-            <div class="grid md:grid-cols-2 gap-8">
-                <div>
-                    <h2 class="text-2xl font-bold text-blue-400 mb-6">Sube tu captura de pantalla</h2>
-                    
-                    <div class="border-2 border-dashed border-blue-400 rounded-xl p-8 text-center mb-6 h-64 flex flex-col items-center justify-center" id="dropZone">
-                        <i class="fas fa-cloud-upload-alt text-blue-400 text-5xl mb-4"></i>
-                        <p class="text-gray-300">Arrastra tu imagen aquí o</p>
-                        <label for="fileInput" class="cursor-pointer mt-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition duration-300 inline-block">
-                            <i class="fas fa-search mr-2"></i> Seleccionar archivo
+        <main class="grid lg:grid-cols-2 gap-10">
+            <!-- Sección de Configuración -->
+            <section class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-xl p-8">
+                <h2 class="text-2xl font-bold text-blue-400 mb-6 flex items-center"><i class="fas fa-cog mr-3"></i>Configuración</h2>
+                <div class="space-y-6">
+                    <div>
+                        <label for="gameSelect" class="block text-sm font-medium mb-2">Juego</label>
+                        <select id="gameSelect" class="w-full select-input">
+                            <option value="auto">Detección automática</option>
+                            <option value="honor">Honor of Kings</option>
+                            <option value="wildrift">Wild Rift</option>
+                            <option value="ml">Mobile Legends</option>
+                            <option value="onmyoji">Onmyoji Arena</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="processingMode" class="block text-sm font-medium mb-2">Modo de procesamiento</label>
+                        <select id="processingMode" class="w-full select-input">
+                            <option value="frontend">Frontend (Tesseract.js)</option>
+                            <option value="backend">Backend (PaddleOCR) - Próximamente</option>
+                        </select>
+                    </div>
+                    <div class="text-center">
+                        <label for="fileInput" class="upload-label">
+                            <i class="fas fa-cloud-upload-alt text-blue-400 text-5xl mb-4"></i>
+                            <p>Arrastra tu imagen aquí o haz clic para seleccionar</p>
                         </label>
                         <input type="file" id="fileInput" accept="image/*" class="hidden">
                     </div>
-                    
-                    <div class="flex space-x-4 mb-6">
-                        <button id="processBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
-                            <i class="fas fa-cogs mr-2"></i> Procesar imagen
-                        </button>
-                        <button id="clearBtn" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
-                            <i class="fas fa-trash-alt mr-2"></i> Limpiar
-                        </button>
-                    </div>
-                    
-                    <div class="bg-gray-800 rounded-xl p-4">
-                        <h3 class="text-lg font-semibold text-blue-400 mb-2">Juegos compatibles</h3>
-                        <div class="flex flex-wrap gap-2">
-                            <span class="bg-blue-900 text-blue-200 px-3 py-1 rounded-full text-sm">Mobile Legends</span>
-                            <span class="bg-purple-900 text-purple-200 px-3 py-1 rounded-full text-sm">Wild Rift</span>
-                            <span class="bg-red-900 text-red-200 px-3 py-1 rounded-full text-sm">Honor of Kings</span>
-                            <span class="bg-yellow-900 text-yellow-200 px-3 py-1 rounded-full text-sm">Onmyoji Arena</span>
-                        </div>
+                    <div id="imagePreview" class="hidden mt-4">
+                        <img id="previewImg" class="max-h-48 mx-auto rounded-lg" alt="Vista previa">
                     </div>
                 </div>
+            </section>
+
+            <!-- Sección de Resultados -->
+            <section class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-xl p-8">
+                <h2 class="text-2xl font-bold text-green-400 mb-6 flex items-center"><i class="fas fa-cogs mr-3"></i>Resultados</h2>
                 
-                <div>
-                    <h2 class="text-2xl font-bold text-blue-400 mb-6">Resultado del OCR</h2>
-                    
-                    <div class="bg-gray-800 rounded-xl p-4 mb-6 h-64 overflow-y-auto">
-                        <div id="progressContainer" class="hidden mb-4">
-                            <div class="flex justify-between text-sm text-gray-400 mb-1">
-                                <span id="progressStatus">Iniciando...</span>
-                                <span id="progressValue">0%</span>
-                            </div>
-                            <div class="w-full bg-gray-700 rounded-full h-2.5">
-                                <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
-                            </div>
-                        </div>
-                        <div id="resultContainer" class="hidden">
-                            <pre id="ocrResult" class="text-sm whitespace-pre-wrap text-gray-200"></pre>
-                        </div>
-                        <div id="placeholder" class="h-full flex items-center justify-center text-gray-500">
-                            <div class="text-center">
-                                <i class="fas fa-file-alt text-4xl mb-2"></i>
-                                <p>El resultado de tu OCR aparecerá aquí</p>
-                            </div>
-                        </div>
+                <!-- Barra de progreso -->
+                <div id="progressContainer" class="hidden mb-6">
+                    <div class="flex justify-between text-sm text-gray-400 mb-2">
+                        <span id="progressStatus">Iniciando OCR...</span>
+                        <span id="progressValue">0%</span>
                     </div>
-                    
-                    <div class="flex space-x-4">
-                        <button id="copyBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center opacity-50" disabled>
-                            <i class="fas fa-copy mr-2"></i> Copiar texto
-                        </button>
-                        <button id="downloadBtn" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center opacity-50" disabled>
-                            <i class="fas fa-download mr-2"></i> Descargar
-                        </button>
+                    <div class="w-full bg-gray-600 rounded-full h-2.5">
+                        <div id="progressBar" class="bg-green-500 h-2.5 rounded-full progress-bar" style="width: 0%"></div>
                     </div>
                 </div>
-            </div>
+
+                <!-- Resultados -->
+                <div id="resultsContent" class="hidden">
+                    <div class="bg-gray-900/70 rounded-xl p-4 mb-6">
+                        <h3 class="text-lg font-semibold text-gray-200 mb-2">Texto Extraído</h3>
+                        <pre id="ocrResult" class="text-sm whitespace-pre-wrap text-gray-200 font-mono overflow-y-auto h-32 p-2 rounded border border-gray-700"></pre>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button id="copyBtn" class="flex-1 btn btn-blue"><i class="fas fa-copy mr-2"></i> Copiar</button>
+                        <button id="downloadBtn" class="flex-1 btn btn-purple"><i class="fas fa-download mr-2"></i> Descargar</button>
+                        <button id="clearBtn" class="flex-1 btn btn-gray"><i class="fas fa-trash-alt mr-2"></i> Limpiar</button>
+                    </div>
+                </div>
+
+                <!-- Placeholder -->
+                <div id="placeholder" class="h-64 flex items-center justify-center text-gray-500 text-center">
+                    <div class="p-4">
+                        <i class="fas fa-file-alt text-4xl mb-2"></i>
+                        <p>Los resultados aparecerán aquí</p>
+                    </div>
+                </div>
+            </section>
         </main>
-        
-        <div class="bg-gray-700 rounded-2xl shadow-xl p-6 mb-10">
-            <h2 class="text-2xl font-bold text-blue-400 mb-6">Cómo utilizar esta herramienta</h2>
-            <div class="grid md:grid-cols-3 gap-6">
-                <div class="bg-gray-800 p-5 rounded-xl">
-                    <div class="text-blue-400 text-3xl mb-4"><i class="fas fa-upload"></i></div>
-                    <h3 class="text-lg font-semibold mb-2">1. Sube tu imagen</h3>
-                    <p class="text-gray-400">Selecciona una captura de pantalla de tus resultados de partida o historial.</p>
+
+        <!-- Análisis de Partida -->
+        <section id="analysisSection" class="hidden fade-in mt-10">
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-xl p-6">
+                <h2 class="text-2xl font-bold text-blue-400 mb-6 flex items-center"><i class="fas fa-chart-line mr-3"></i> Análisis de Partida</h2>
+                <div class="grid md:grid-cols-5 gap-4 mb-8">
+                    <div class="stat-card">
+                        <div class="text-2xl font-bold text-green-400" id="matchDate">--/--/--</div>
+                        <div class="text-gray-400 text-xs mt-1">FECHA</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="text-2xl font-bold text-blue-400" id="matchDuration">--:--</div>
+                        <div class="text-gray-400 text-xs mt-1">DURACIÓN</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="text-2xl font-bold text-purple-400" id="matchType">--</div>
+                        <div class="text-gray-400 text-xs mt-1">TIPO</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="text-2xl font-bold text-yellow-400" id="mvpKda">--/--/--</div>
+                        <div class="text-gray-400 text-xs mt-1">MVP</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="text-2xl font-bold text-red-400" id="matchKda">--</div>
+                        <div class="text-gray-400 text-xs mt-1">PUNTUACIÓN</div>
+                    </div>
                 </div>
-                <div class="bg-gray-800 p-5 rounded-xl">
-                    <div class="text-blue-400 text-3xl mb-4"><i class="fas fa-cogs"></i></div>
-                    <h3 class="text-lg font-semibold mb-2">2. Procesa el texto</h3>
-                    <p class="text-gray-400">Nuestro OCR especializado analizará la imagen para extraer todo el texto.</p>
-                </div>
-                <div class="bg-gray-800 p-5 rounded-xl">
-                    <div class="text-blue-400 text-3xl mb-4"><i class="fas fa-file-export"></i></div>
-                    <h3 class="text-lg font-semibold mb-2">3. Copia o descarga</h3>
-                    <p class="text-gray-400">Obtén los resultados en formato de texto para tus análisis o registros.</p>
+                <div id="playersTableContainer" class="overflow-x-auto">
+                    <table id="playersTable" class="w-full text-left border border-gray-700 rounded-lg overflow-hidden hidden">
+                        <thead class="bg-gray-700">
+                            <tr>
+                                <th class="p-3">Jugador</th>
+                                <th class="p-3">Campeón</th>
+                                <th class="p-3">Nivel</th>
+                                <th class="p-3">K/D/A</th>
+                                <th class="p-3">Puntuación</th>
+                                <th class="p-3">MVP</th>
+                            </tr>
+                        </thead>
+                        <tbody id="playersTableBody"></tbody>
+                    </table>
                 </div>
             </div>
-        </div>
-        
-        <div class="bg-gray-700 rounded-2xl shadow-xl p-6 text-center">
-            <h2 class="text-2xl font-bold text-blue-400 mb-4">Características técnicas</h2>
-            <p class="text-gray-300 mb-4">Optimizado para reconocer texto en interfaces de MOBA y resultados de partidas</p>
-            <div class="flex flex-wrap justify-center gap-3">
-                <span class="bg-blue-900 text-blue-200 px-3 py-1 rounded-full text-sm">Reconoce nombres de jugadores</span>
-                <span class="bg-blue-900 text-blue-200 px-3 py-1 rounded-full text-sm">Extrae estadísticas (K/D/A)</span>
-                <span class="bg-blue-900 text-blue-200 px-3 py-1 rounded-full text-sm">Detecta porcentajes y ratios</span>
-                <span class="bg-blue-900 text-blue-200 px-3 py-1 rounded-full text-sm">Identifica tiempos de partida</span>
+        </section>
+    </div>
+
+    <!-- Overlay de procesamiento -->
+    <div id="processingOverlay" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50">
+        <div class="bg-gray-800 rounded-xl p-8 text-center max-w-md">
+            <div class="flex justify-center mb-4">
+                <div class="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+            <p class="text-xl font-semibold text-blue-400" id="overlayStatus">Inicializando...</p>
+            <div class="w-full bg-gray-700 rounded-full h-2.5 mt-4">
+                <div id="overlayProgressBar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
             </div>
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const fileInput = document.getElementById('fileInput');
-            const dropZone = document.getElementById('dropZone');
-            const processBtn = document.getElementById('processBtn');
-            const clearBtn = document.getElementById('clearBtn');
-            const copyBtn = document.getElementById('copyBtn');
-            const downloadBtn = document.getElementById('downloadBtn');
-            const progressContainer = document.getElementById('progressContainer');
-            const progressBar = document.getElementById('progressBar');
-            const progressStatus = document.getElementById('progressStatus');
-            const progressValue = document.getElementById('progressValue');
-            const resultContainer = document.getElementById('resultContainer');
-            const ocrResult = document.getElementById('ocrResult');
-            const placeholder = document.getElementById('placeholder');
-            
-            let currentImage = null;
-            let extractedText = '';
-            
-            // Configuración de la zona de arrastre
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                dropZone.addEventListener(eventName, preventDefaults, false);
-            });
-            
-            function preventDefaults(e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            
-            ['dragenter', 'dragover'].forEach(eventName => {
-                dropZone.addEventListener(eventName, highlight, false);
-            });
-            
-            ['dragleave', 'drop'].forEach(eventName => {
-                dropZone.addEventListener(eventName, unhighlight, false);
-            });
-            
-            function highlight() {
-                dropZone.classList.add('border-blue-500');
-                dropZone.classList.remove('border-blue-400');
-            }
-            
-            function unhighlight() {
-                dropZone.classList.remove('border-blue-500');
-                dropZone.classList.add('border-blue-400');
-            }
-            
-            dropZone.addEventListener('drop', handleDrop, false);
-            
-            function handleDrop(e) {
-                const dt = e.dataTransfer;
-                const files = dt.files;
-                handleFiles(files);
-            }
-            
-            fileInput.addEventListener('change', function() {
-                handleFiles(this.files);
-            });
-            
-            function handleFiles(files) {
-                if (files.length > 0) {
-                    const file = files[0];
-                    if (file.type.match('image.*')) {
-                        const reader = new FileReader();
-                        reader.onload = function(e) {
-                            currentImage = e.target.result;
-                            // Mostrar vista previa
-                            dropZone.innerHTML = `
-                                <img src="${currentImage}" class="max-h-48 mx-auto mb-2 rounded" alt="Vista previa">
-                                <p class="text-gray-300 text-sm">${file.name}</p>
-                            `;
-                        };
-                        reader.readAsDataURL(file);
-                    }
-                }
-            }
-            
-            // Procesar imagen con Tesseract
-            processBtn.addEventListener('click', function() {
-                if (!currentImage) {
-                    alert('Por favor, sube una imagen primero.');
-                    return;
-                }
-                
-                // Reiniciar interfaz
-                progressContainer.classList.remove('hidden');
-                resultContainer.classList.add('hidden');
-                placeholder.classList.add('hidden');
-                processBtn.disabled = true;
-                copyBtn.disabled = true;
-                downloadBtn.disabled = true;
-                
-                Tesseract.recognize(
-                    currentImage,
-                    'eng+spa', // Idiomas: inglés y español
-                    { 
-                        logger: message => updateProgress(message),
-                        // Configuración específica para interfaces de juego
-                        tessedit_pageseg_mode: Tesseract.PSM.SPARSE_TEXT,
-                        tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÁÉÍÓÚáéíóúÑñ/-:.%()KDA '
-                    }
-                ).then(result => {
-                    extractedText = result.data.text;
-                    ocrResult.textContent = extractedText;
-                    
-                    // Actualizar interfaz
-                    progressContainer.classList.add('hidden');
-                    resultContainer.classList.remove('hidden');
-                    processBtn.disabled = false;
-                    copyBtn.disabled = false;
-                    downloadBtn.disabled = false;
-                    
-                    // Habilitar botones
-                    copyBtn.classList.remove('opacity-50');
-                    downloadBtn.classList.remove('opacity-50');
-                }).catch(err => {
-                    console.error(err);
-                    alert('Error al procesar la imagen: ' + err.message);
-                    processBtn.disabled = false;
-                });
-            });
-            
-            function updateProgress(message) {
-                if (message.status === 'recognizing text') {
-                    const progress = Math.round(message.progress * 100);
-                    progressBar.style.width = `${progress}%`;
-                    progressValue.textContent = `${progress}%`;
-                    
-                    if (progress < 30) {
-                        progressStatus.textContent = 'Analizando estructura...';
-                    } else if (progress < 70) {
-                        progressStatus.textContent = 'Extrayendo texto...';
-                    } else {
-                        progressStatus.textContent = 'Finalizando...';
-                    }
-                }
-            }
-            
-            // Limpiar todo
-            clearBtn.addEventListener('click', function() {
-                fileInput.value = '';
-                currentImage = null;
-                extractedText = '';
-                
-                // Restablecer interfaz
-                dropZone.innerHTML = `
-                    <i class="fas fa-cloud-upload-alt text-blue-400 text-5xl mb-4"></i>
-                    <p class="text-gray-300">Arrastra tu imagen aquí o</p>
-                    <label for="fileInput" class="cursor-pointer mt-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition duration-300 inline-block">
-                        <i class="fas fa-search mr-2"></i> Seleccionar archivo
-                    </label>
-                `;
-                
-                progressContainer.classList.add('hidden');
-                resultContainer.classList.add('hidden');
-                placeholder.classList.remove('hidden');
-                
-                copyBtn.disabled = true;
-                downloadBtn.disabled = true;
-                copyBtn.classList.add('opacity-50');
-                downloadBtn.classList.add('opacity-50');
-            });
-            
-            // Copiar texto al portapapeles
-            copyBtn.addEventListener('click', function() {
-                if (!extractedText) return;
-                
-                navigator.clipboard.writeText(extractedText).then(() => {
-                    // Feedback visual
-                    const originalText = copyBtn.innerHTML;
-                    copyBtn.innerHTML = '<i class="fas fa-check mr-2"></i> ¡Copiado!';
-                    setTimeout(() => {
-                        copyBtn.innerHTML = originalText;
-                    }, 2000);
-                }).catch(err => {
-                    console.error('Error al copiar: ', err);
-                });
-            });
-            
-            // Descargar texto
-            downloadBtn.addEventListener('click', function() {
-                if (!extractedText) return;
-                
-                const blob = new Blob([extractedText], { type: 'text/plain' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'resultado-ocr.txt';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            });
-        });
-    </script>
+    <script src="app.js" defer></script>
 </body>
 </html>
