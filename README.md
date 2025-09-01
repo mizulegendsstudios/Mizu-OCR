@@ -83,6 +83,29 @@ Tus imágenes **nunca se suben a ningún servidor**. Todo el procesamiento ocurr
 | `PSM mode` | Usa `PSM.SINGLE_BLOCK` si el texto es denso |
 | `idiomas` | Añade `chi_sim`, `jpn`, `kor` si necesitas otros idiomas |
 
+### Estructura del Repositorio
+📁 (raíz)
+├── 📄 README.md            ← qué es y cómo usarlo
+├── 📄 .gitignore           ← qué no sube a Git
+│
+├── 📂 src/                 ← todo el código fuente
+│   ├── 📂 backend/         ← servidor + IA
+│   │   ├── api.py          ← FastAPI
+│   │   ├── ocr_model/      ← red neuronal
+│   │   └── requirements.txt← pip install -r …
+│   │
+│   ├── 📂 frontend/        ← web
+│   │   ├── index.html
+│   │   ├── styles/         ← Tailwind
+│   │   └── scripts/        ← JS
+│   │
+│   └── 📂 mobile/          ← app Android (Kotlin)
+│       └── res/            ← XML layouts, imgs
+│
+├── 📂 data/                ← capturas + etiquetas
+│
+└── 📂 models/              ← modelos entrenados
+
 ### 🧪 Ejemplo: Mejorar precisión para Honor of Kings
 ```js
 Tesseract.recognize(
@@ -93,3 +116,7 @@ Tesseract.recognize(
     tessedit_pageseg_mode: Tesseract.PSM.SPARSE_TEXT
   }
 )
+
+
+
+
